@@ -648,14 +648,14 @@ SQL_FILE=$MANIFESTS/init_transactions.sql
 #);
 #\copy public.applehistory FROM '/tmp/$DATA_FILE' WITH (FORMAT csv, HEADER true, DELIMITER ',');
 #EOF
-#        sleep 120s
+        sleep 120s
         POSTGRESQL_POD=$(kubectl get po -n $DATALAKE_NAMESPACE -l name=$POSTGRESQL_SERVICE -o jsonpath={..metadata.name})
 	echo $POSTGRESQL_POD
   echo $DATA_FILE
   echo $SQL_FILE
 	kubectl cp -n $DATALAKE_NAMESPACE $DATA_FILE "$POSTGRESQL_POD:/tmp/"
 	kubectl cp -n $DATALAKE_NAMESPACE $SQL_FILE "$POSTGRESQL_POD:/tmp/"
-	kubectl exec -n $DATALAKE_NAMESPACE $POSTGRESQL_POD -- psql -U $DATALAKE_USER -d $POSTGRESQL_DATABASE -a -f /tmp/init-stock-prices.sql
+	kubectl exec -n $DATALAKE_NAMESPACE $POSTGRESQL_POD -- psql -U $DATALAKE_USER -d $POSTGRESQL_DATABASE -a -f /tmp/init_transactions.sql
 
         rm -f $DATA_FILE 
 

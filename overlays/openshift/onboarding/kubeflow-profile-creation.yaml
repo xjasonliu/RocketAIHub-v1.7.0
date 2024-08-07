@@ -3,7 +3,7 @@ kind: UserConfig
 metadata:
   name: kubeflow-user
 spec:
-  providerName: Local Password
+  providerName: htpasswd
   #name: {{ index (lookup "user.openshift.io/v1" "Identity" "" (index .Identities 0)).Extra "email" }}
   templates:
   - objectTemplate: |
