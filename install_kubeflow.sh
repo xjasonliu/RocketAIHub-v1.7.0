@@ -325,7 +325,7 @@ case "$create_datalake" in
 	DATALAKE_PASS=marten-mole
 
 	POSTGRESQL_SERVICE=postgresql
-	POSTGRESQL_DATABASE=stock-prices
+	POSTGRESQL_DATABASE=fraud
 	POSTGRESQL_VOLUME_CAPACITY=10Gi
 
 	MONGODB_SERVICE=mongodb
@@ -631,30 +631,33 @@ EOF
         # Initialize Data Basis
 
 	# Initialize PostgreSQL
-	DATA_FILE=HistoricalDataApple.csv
-        wget https://ibm.box.com/shared/static/89i7cxkeok6ndd0kh6q2ycvviip94eby.csv -O $DATA_FILE
-        sed -i 's/\$//g' $DATA_FILE
-        cat > init-stock-prices.sql <<EOF
-CREATE TABLE IF NOT EXISTS public.applehistory
-(
-    "Date" date NOT NULL,
-    "Close" real,
-    "Volume" bigint,
-    "Open" real,
-    "High" real,
-    "Low" real,
-    CONSTRAINT "appleHistory_pkey" PRIMARY KEY ("Date")
-);
-\copy public.applehistory FROM '/tmp/$DATA_FILE' WITH (FORMAT csv, HEADER true, DELIMITER ',');
-EOF
-        sleep 120s
+DATA_FILE=preprocessed_transactions.csv
+SQL_FILE=$MANIFESTS/init_transactions.sql
+        wget https://ibm.box.com/shared/static/4c764u93lyjr6f471y216vttk9j7m14p.csv -O $DATA_FILE
+#        sed -i 's/\$//g' $DATA_FILE
+#        cat > init-stock-prices.sql <<EOF
+#CREATE TABLE IF NOT EXISTS public.applehistory
+#(
+#    "Date" date NOT NULL,
+#    "Close" real,
+#    "Volume" bigint,
+#    "Open" real,
+#    "High" real,
+#    "Low" real,
+#    CONSTRAINT "appleHistory_pkey" PRIMARY KEY ("Date")
+#);
+#\copy public.applehistory FROM '/tmp/$DATA_FILE' WITH (FORMAT csv, HEADER true, DELIMITER ',');
+#EOF
+#        sleep 120s
         POSTGRESQL_POD=$(kubectl get po -n $DATALAKE_NAMESPACE -l name=$POSTGRESQL_SERVICE -o jsonpath={..metadata.name})
 	echo $POSTGRESQL_POD
+  echo $DATA_FILE
+  echo $SQL_FILE
 	kubectl cp -n $DATALAKE_NAMESPACE $DATA_FILE "$POSTGRESQL_POD:/tmp/"
-	kubectl cp -n $DATALAKE_NAMESPACE init-stock-prices.sql "$POSTGRESQL_POD:/tmp/"
+	kubectl cp -n $DATALAKE_NAMESPACE $SQL_FILE "$POSTGRESQL_POD:/tmp/"
 	kubectl exec -n $DATALAKE_NAMESPACE $POSTGRESQL_POD -- psql -U $DATALAKE_USER -d $POSTGRESQL_DATABASE -a -f /tmp/init-stock-prices.sql
 
-        rm -f $DATA_FILE init-stock-prices.sql
+        rm -f $DATA_FILE 
 
 	# Initialize MongoDB
         WEATHER_FILE=weather_ny_2012-2022.csv
